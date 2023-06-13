@@ -1,0 +1,181 @@
+"","Country Name","Year","Emissions"
+"1","China",1990,2173364
+"2","China",1991,2302185
+"3","China",1992,2418175
+"4","China",1993,2645412
+"5","China",1994,2767667
+"6","China",1995,3088620
+"7","China",1996,3070505
+"8","China",1997,3134113
+"9","China",1998,3236279
+"10","China",1999,3153661
+"11","China",2000,3346526
+"12","China",2001,3529081
+"13","China",2002,3810057
+"14","China",2003,4415913
+"15","China",2004,5124817
+"16","China",2005,5824625
+"17","China",2006,6437470
+"18","China",2007,6993183
+"19","China",2008,7199605
+"20","China",2009,7719071
+"21","China",2010,8474923
+"22","China",2011,9282554
+"23","China",2012,9541867
+"24","China",2013,9984572
+"25","China",2014,10006670
+"26","China",2015,9861100
+"27","China",2016,9874656
+"28","China",2017,10096010
+"29","China",2018,10502930
+"30","China",2019,10707220
+"31","Germany",1990,955307.7
+"32","Germany",1991,932548.1
+"33","Germany",1992,892817.4
+"34","Germany",1993,887057
+"35","Germany",1994,875897.1
+"36","Germany",1995,874659.4
+"37","Germany",1996,904337.4
+"38","Germany",1997,872646.5
+"39","Germany",1998,865253.7
+"40","Germany",1999,833594.9
+"41","Germany",2000,830284.1
+"42","Germany",2001,847678.2
+"43","Germany",2002,833382.2
+"44","Germany",2003,836794.5
+"45","Germany",2004,821073.6
+"46","Germany",2005,802383.2
+"47","Germany",2006,814413.1
+"48","Germany",2007,783803
+"49","Germany",2008,789690.4
+"50","Germany",2009,734805.5
+"51","Germany",2010,773069.1
+"52","Germany",2011,746477.3
+"53","Germany",2012,760127.7
+"54","Germany",2013,776151.8
+"55","Germany",2014,736011.7
+"56","Germany",2015,742314.4
+"57","Germany",2016,747147.2
+"58","Germany",2017,732204.2
+"59","Germany",2018,707700.7
+"60","Germany",2019,657401
+"61","India",1990,563577.2
+"62","India",1991,607225.8
+"63","India",1992,626294.3
+"64","India",1993,651351.7
+"65","India",1994,685903.4
+"66","India",1995,737856.8
+"67","India",1996,774070.6
+"68","India",1997,819269.2
+"69","India",1998,836270.2
+"70","India",1999,901325.6
+"71","India",2000,937858.7
+"72","India",2001,953537.6
+"73","India",2002,985453.6
+"74","India",2003,1011771
+"75","India",2004,1085667
+"76","India",2005,1136467
+"77","India",2006,1215206
+"78","India",2007,1336737
+"79","India",2008,1424383
+"80","India",2009,1564881
+"81","India",2010,1659983
+"82","India",2011,1756744
+"83","India",2012,1909443
+"84","India",2013,1972430
+"85","India",2014,2147108
+"86","India",2015,2158024
+"87","India",2016,2195249
+"88","India",2017,2320405
+"89","India",2018,2451927
+"90","India",2019,2456301
+"91","Russian Federation",1990,2163533
+"92","Russian Federation",1991,2136444
+"93","Russian Federation",1992,2030812
+"94","Russian Federation",1993,1880246
+"95","Russian Federation",1994,1685048
+"96","Russian Federation",1995,1635486
+"97","Russian Federation",1996,1601178
+"98","Russian Federation",1997,1489508
+"99","Russian Federation",1998,1487966
+"100","Russian Federation",1999,1523723
+"101","Russian Federation",2000,1563847
+"102","Russian Federation",2001,1567174
+"103","Russian Federation",2002,1565336
+"104","Russian Federation",2003,1609999
+"105","Russian Federation",2004,1600980
+"106","Russian Federation",2005,1611984
+"107","Russian Federation",2006,1654853
+"108","Russian Federation",2007,1658151
+"109","Russian Federation",2008,1655193
+"110","Russian Federation",2009,1546668
+"111","Russian Federation",2010,1617829
+"112","Russian Federation",2011,1699085
+"113","Russian Federation",2012,1675757
+"114","Russian Federation",2013,1632681
+"115","Russian Federation",2014,1611961
+"116","Russian Federation",2015,1592560
+"117","Russian Federation",2016,1571518
+"118","Russian Federation",2017,1594551
+"119","Russian Federation",2018,1661001
+"120","Russian Federation",2019,1703590
+"121","Saudi Arabia",1990,171407.1
+"122","Saudi Arabia",1991,187931.5
+"123","Saudi Arabia",1992,202038.1
+"124","Saudi Arabia",1993,203256.5
+"125","Saudi Arabia",1994,206361
+"126","Saudi Arabia",1995,204832
+"127","Saudi Arabia",1996,217654
+"128","Saudi Arabia",1997,220074.5
+"129","Saudi Arabia",1998,233900.4
+"130","Saudi Arabia",1999,239521.9
+"131","Saudi Arabia",2000,249656.5
+"132","Saudi Arabia",2001,254085.8
+"133","Saudi Arabia",2002,272252.7
+"134","Saudi Arabia",2003,284830.1
+"135","Saudi Arabia",2004,299891
+"136","Saudi Arabia",2005,315294.9
+"137","Saudi Arabia",2006,335436.2
+"138","Saudi Arabia",2007,354619.4
+"139","Saudi Arabia",2008,389715.4
+"140","Saudi Arabia",2009,406528.6
+"141","Saudi Arabia",2010,446133.4
+"142","Saudi Arabia",2011,463765.6
+"143","Saudi Arabia",2012,492468.1
+"144","Saudi Arabia",2013,503214.7
+"145","Saudi Arabia",2014,540521.2
+"146","Saudi Arabia",2015,565191.2
+"147","Saudi Arabia",2016,561230.9
+"148","Saudi Arabia",2017,545070.8
+"149","Saudi Arabia",2018,521256.8
+"150","Saudi Arabia",2019,523778.5
+"151","United States",1990,4844519
+"152","United States",1991,4807499
+"153","United States",1992,4879628
+"154","United States",1993,4995211
+"155","United States",1994,5066805
+"156","United States",1995,5117038
+"157","United States",1996,5273488
+"158","United States",1997,5543351
+"159","United States",1998,5590538
+"160","United States",1999,5609019
+"161","United States",2000,5775808
+"162","United States",2001,5748263
+"163","United States",2002,5593026
+"164","United States",2003,5658993
+"165","United States",2004,5738287
+"166","United States",2005,5753494
+"167","United States",2006,5653082
+"168","United States",2007,5736320
+"169","United States",2008,5558380
+"170","United States",2009,5156427
+"171","United States",2010,5392112
+"172","United States",2011,5173595
+"173","United States",2012,4956058
+"174","United States",2013,5092102
+"175","United States",2014,5107214
+"176","United States",2015,4990709
+"177","United States",2016,4894503
+"178","United States",2017,4819370
+"179","United States",2018,4975307
+"180","United States",2019,4817719
