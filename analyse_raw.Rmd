@@ -1,0 +1,171 @@
+---
+title: "Analyse raw"
+author: "Raphael Balzer"
+date: "2023-06-08"
+output:
+  prettydoc::html_pretty:
+    theme: Cayman
+    toc: true
+    df_print: paged
+---
+# Untersuchung des Effekts von R001 auf die Interessenssteigerung
+
+## Datenimport und Laden der Pakete
+
+```{r}
+library(readxl)
+library(sjmisc)
+library(tidyverse)
+library(ggstatsplot)
+library(rstanarm)
+library(easystats)
+daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
+View(daten)
+```
+
+## Vergleich der Mittelwerte der Interessenssteigerung
+
+### Berechnung der Summen
+
+Für den Vergleich müssen wir erst die Summen der Items berechnen und dann die Summen des Interesses vor Betrachtung des Stimulus von denen nach der Betrachtung des Stimulus subtrahieren.
+
+```{r}
+daten <-
+daten %>% 
+  select(!c(SERIAL:STARTED, MAILSENT, LASTDATA, MISSING, MISSREL, MAXPAGE, 
+            R001_CP, TIME001:TIME004, TIME006:TIME011))
+daten <- daten %>% 
+   row_sums(daten[21:24], n = 4, var = "sum_ibefore") %>% 
+   row_sums(daten[25:28], n = 4, var = "sum_iafter")
+
+daten <- daten[complete.cases(daten[c("sum_ibefore", "sum_iafter")]), ]
+
+daten <- daten %>% 
+  mutate(sum_diff = sum_iafter - sum_ibefore)
+```
+
+
+### Berechnung und Visualisierung der Mittelwerte
+
+Nun können wir einfach die Mittelwerte der Differenzen bilden und visualisieren.
+
+```{r}
+daten <- daten %>%
+  group_by(R001) %>% 
+  mutate(mean_diff = mean(sum_diff))
+
+ggbetweenstats(
+  daten,
+  x = R001,
+  y = sum_diff,
+  results.subtitle = FALSE
+) 
+```
+
+Jetzt sehen wir die Unterschiede in der Interessenssteigerung für jede Gruppe. Die Unterschiede fallen äußerst gering aus, nichtsdestotrotz ist ein leichter Unterschied zu erkennen, der sich mit unserer Hypothese deckt, nämlich fällt die Interessenssteigerung beim animierten Graph höher aus, als beim statischen und die Steigerung beim interaktiven wiederum höher als beim animierten. Bemerkenswert ist außerdem, dass es bei Gruppe 3 nur einen Fall gibt, bei dem sich eine Interessensminderung abzeichnet, während es bei den anderen beiden Gruppen sowohl mehr, als auch extremere Fälle dieser Art gibt.
+
+## Berechnung des Modells
+
+Nun berechnen wir das Modell, als die Interessenssteigerung in Abhängigkeit von der Versuchsgruppe:
+
+```{r}
+daten1 <- daten %>% 
+  mutate(R001 = factor(R001))
+
+lm1 <- stan_glm(sum_diff ~ R001, 
+                data = daten1, 
+                refresh = 0)
+```
+
+## Prüfen auf Signifikanz
+
+### Interpretation der Modellparameter
+
+Nun sehen wir uns die Koeffizienten des Modells an:
+
+```{r}
+parameters(lm1)
+```
+
+```{r}
+parameters(lm1) %>% plot(show_intercept = TRUE)
+```
+
+Der Gruppenunterschied wird auf 0.31, 0.22 geschätzt; das ist der Punktschätzer der UV R001. Die Grenzen eines 95%-CI für die UV liegen bei 0.24 bzw. 0.35. Dieser Bereich schließt die 0 aus, das heißt, dass auf jeden Fall ein Effekt vorliegt.
+
+### ROPE-Test
+
+Testen der Hypothese mit dem ROPE-Verfahren:
+
+```{r}
+rope(lm1)
+```
+```{r}
+rope(lm1) %>% plot()
+```
+Die Verteilungen liegen zu 4%, 32% und 17% im ROPE, das heißt wir können keinen signifikanten Effekt feststellen.
+
+
+```{r}
+report(lm1)
+```
+## Fazit
+
+Für den Effekt des Diagrammtyps ist keine klare inferenzstatistische Aussage hinsichtlich eines Indifferenzbereichs möglich: Es ist plauibel, laut dem Modell, dass es einen praktisch bedeutsamen Unterschied gibt, aber es ist auch plausibel, dass es keinen praktisch bedeutsamen Unterschied gibt.
+
+# Untersuchung des Effekts von Cognitive Load auf die Interessenssteigerung
+
+
+Nun untersuchen wir, ob Cognitive Load (CL) einen Einfluss auf die Interessenssteigerung hat und den Effekt von GR001 auf die Iteressenssteigerung mediiert.
+
+```{r}
+lm2 <- stan_glm(sum_diff ~ CL02_01, 
+                data = daten1, 
+                refresh = 0)
+```
+
+```{r}
+parameters(lm2)
+```
+```{r}
+parameters(lm2) %>% plot(show_intercept = TRUE)
+```
+```{r}
+rope(lm2)
+```
+```{r}
+rope(lm2) %>% plot()
+```
+```{r}
+report(lm2)
+```
+## Fazit
+
+Es ist kein signifikanter Effekt festzustellen, wenn dann nur ein äußerst schwacher. Völlig auszuschließen ist der Effekt jedoch auch nicht.
+
+# Untersuchung des Effekts von R001 auf CL
+
+```{r}
+lm3 <- stan_glm(CL02_01 ~ R001, 
+                data = daten1, 
+                refresh = 0)
+```
+
+```{r}
+parameters(lm3)
+```
+```{r}
+parameters(lm3) %>% plot(show_intercept = TRUE)
+```
+```{r}
+rope(lm3)
+```
+```{r}
+rope(lm3) %>% plot()
+```
+```{r}
+report(lm3)
+```
+## Fazit
+
+Es ist hier ebenfalls kein signifikanter Effekt zu beobachten.

@@ -51,5 +51,3 @@ animated_graph_final <- animate(animated_graph,
 animated_graph_final
 anim_save("animated_graph.gif")
 static
-
-#hilfeee
