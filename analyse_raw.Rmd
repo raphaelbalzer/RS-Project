@@ -54,6 +54,12 @@ daten <- daten %>%
   group_by(R001) %>% 
   mutate(mean_diff = mean(sum_diff))
 
+daten <- daten %>% 
+  mutate(mean_diff1 = sum_diff/4,
+         mean_diff_z = std(mean_diff1),
+         sd_diff = sd(sum_diff))
+         
+
 ggbetweenstats(
   daten,
   x = R001,
@@ -63,6 +69,64 @@ ggbetweenstats(
 ```
 
 Jetzt sehen wir die Unterschiede in der Interessenssteigerung für jede Gruppe. Die Unterschiede fallen äußerst gering aus, nichtsdestotrotz ist ein leichter Unterschied zu erkennen, der sich mit unserer Hypothese deckt, nämlich fällt die Interessenssteigerung beim animierten Graph höher aus, als beim statischen und die Steigerung beim interaktiven wiederum höher als beim animierten. Bemerkenswert ist außerdem, dass es bei Gruppe 3 nur einen Fall gibt, bei dem sich eine Interessensminderung abzeichnet, während es bei den anderen beiden Gruppen sowohl mehr, als auch extremere Fälle dieser Art gibt.
+
+### Berechnung des Standardfehlers
+
+```{r}
+i_alpha <- .9
+
+i_stdmessfehler = sd(daten$mean_diff1, na.rm = TRUE) * sqrt(1 - i_alpha)
+i_stdmessfehler
+```
+### Berechnung der 95% Konfidenzintervalle
+
+```{r}
+daten <- daten %>% 
+  mutate(KI_unten = mean_diff1 - 2*i_stdmessfehler,
+         KI_oben = mean_diff1 + 2*i_stdmessfehler)
+
+```
+### Visualisierung der Konfidenzintervalle
+
+```{r}
+daten %>% 
+  slice_head(n = 5) %>% 
+  ggplot() +
+  aes(y = mean_diff1, ymin = KI_unten, ymax = KI_oben, x = CASE) +
+  geom_pointrange()
+```
+
+### Cronbachs Aplha
+
+```{r}
+daten2 <-
+  daten %>% 
+  select(-R001)
+
+i_items <- daten %>% 
+  group_by(R001) %>% 
+  ungroup() %>% 
+  select(I101_01:I201_04)
+
+alpha_result <- psych::alpha(i_items)
+
+alpha_result$total$raw_alpha
+
+```
+
+
+
+### Korrelationsmatrix
+
+```{r}
+daten %>% 
+  select(c(CL02_01, mean_diff1, Bildungsstand, Taetigkeit, Alter, Geschlecht, R001))%>%  
+  correlation()%>% 
+  summary()%>% 
+  plot() 
+```
+
+
 
 ## Berechnung des Modells
 
