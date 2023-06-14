@@ -17,6 +17,7 @@ library(readxl)
 library(sjmisc)
 library(tidyverse)
 library(ggstatsplot)
+library(ggcorrplot)
 library(rstanarm)
 library(easystats)
 daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
@@ -120,10 +121,21 @@ alpha_result$total$raw_alpha
 
 ```{r}
 daten %>% 
-  select(c(CL02_01, mean_diff1, Bildungsstand, Taetigkeit, Alter, Geschlecht, R001))%>%  
-  correlation()%>% 
+  select(c(CL02_01, mean_diff1, DE01:DE03, R001))%>%  
+  correlation(bayesian = TRUE)%>% 
   summary()%>% 
   plot() 
+
+cor <- daten %>% 
+  select(c(CL02_01, mean_diff1, DE01:DE03, R001))
+
+cor %>% 
+  cor() %>% 
+  ggcorrplot(method = "circle", 
+             type = "lower",
+             colors = c("violet", "grey", "blue"),
+             outline.color = "white",
+             ggtheme = theme_void())
 ```
 
 
