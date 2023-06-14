@@ -131,7 +131,7 @@ cor <- daten %>%
 
 cor %>% 
   cor() %>% 
-  ggcorrplot(method = "circle", 
+  ggcorrplot(method = "square", 
              type = "lower",
              colors = c("violet", "grey", "blue"),
              outline.color = "white",
