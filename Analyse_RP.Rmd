@@ -23,6 +23,143 @@ daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
 View(daten)
 ```
 
+## Datenvorverarbeitung
+### unnötige Spalten löschen
+```{r}
+daten1 <-
+daten %>% 
+  select(!c(SERIAL, REF, QUESTNNR, MODE, STARTED, MAILSENT, LASTDATA, MISSING, MISSREL, MAXPAGE, R001_CP, TIME001, TIME002, TIME003, TIME004, TIME006, TIME007, TIME008, TIME009, TIME010, TIME011))
+```
+### Rando-Code zusammenfassen
+```{r}
+daten1 <- daten1 %>% 
+  unite(rand_code, GC01_01, GC01_02, GC01_03, GC01_04, GC01_05, GC01_06, sep = "")
+```
+
+### Werte umbennen
+DE_01 zu gender
+1 = männlich
+2 = weiblich
+3 = divers
+```{r}
+daten1$Geschlecht <-
+  recode(daten1$DE01, "1" = "männlich", "2" = "weiblich", "3" = "divers")
+```
+DE_02 zu Alter
+"1" = "18 - 24",
+"2" = "25 - 39",
+"3" = "40 - 59",
+"4" = "60 - 64",
+"5" = "65+"
+```{r}
+daten1$Alter <-
+  recode(daten1$DE02, "1" = "18 - 24",
+"2" = "25 - 39",
+"3" = "40 - 59",
+"4" = "60 - 64",
+"5" = "65+")
+```
+DE_03 zu Taetigkeit
+"1" = "Schüler:in",
+"2" = "Auszubildende:r",
+"3" = "Berufstätig",
+"4" = "Pensionär:in / Rentner:in",
+"5" = "Sonstiges",
+"6" = "Studenten"
+```{r}
+daten1$Taetigkeit <-
+  recode(daten1$DE03, "1" = "Schüler:in",
+"2" = "Auszubildende:r",
+"3" = "Berufstätig",
+"4" = "Pensionär:in / Rentner:in",
+"5" = "Sonstiges",
+"6" = "Studenten")
+```
+DE_04 zu Bildungsstand
+"1" = "Qualifizierender Abschluss",
+"2" = "Mittlere Reife",
+"3" = "Fachhochschulreife",
+"4" = "Allgemeine Hochschulreife/ Abitur",
+"5" = "Bachelor",
+"6" = "Master",
+"7" = "Promotion",
+"8" = "Sonstiges"
+```{r}
+daten1$Bildungsstand <-
+  recode(daten1$DE04, "1" = "Qualifizierender Abschluss",
+"2" = "Mittlere Reife",
+"3" = "Fachhochschulreife",
+"4" = "Allgemeine Hochschulreife/ Abitur",
+"5" = "Bachelor",
+"6" = "Master",
+"7" = "Promotion",
+"8" = "Sonstiges")
+```
+
+### überflüssige Spalten raus
+
+```{r}
+daten1 <-
+daten1 %>% 
+  select(!c(DE01, DE02, DE03, DE04))
+```
+
+### DI01 zu Categorial Disposition
+1 JA 
+2 NEIN
+```{r}
+daten1 <- daten1 %>% 
+  mutate(disp_interest = case_when(
+    DI01 <= "1" ~ "JA",
+    DI01 >= "2" ~ "NEIN"
+  ))
+```
+
+### Alle Zeilen entfernen, die nicht auswertbar sind
+```{r}
+daten1 <- daten1 %>% 
+  mutate(LASTPAGE = case_when(
+    LASTPAGE < 10 ~ NA,
+    LASTPAGE >= 10 ~ TRUE)) %>% 
+  drop_na(LASTPAGE)
+```
+
+### UV & Mod als Faktor
+```{r}
+daten1 <- daten1 %>% 
+  mutate(R001 = as.factor(R001),
+         disp_interest = as.factor(disp_interest))
+```
+
+# FF01 auf falsche Antworten prüfen
+```{r}
+daten1 %>% count(FF01)
+```
+--> keine falschen Antworten
+
+### Interaktiv nicht genutzt -> animiert
+
+```{r}
+daten1 <- daten1 %>%
+  mutate(R001 = case_when(GR03 > 1 ~ "2", 
+                          TRUE ~ R001))
+```
+
+```{r}
+daten1 %>% count(R001)
+```
+
+### rename CL
+```{r}
+daten1 <- daten1 %>% rename(CL = CL02_01)
+```
+
+### löschen 
+```{r}
+daten1 <- daten1 %>% 
+  select(-DE04_08)
+```
+
 ## Vergleich der Mittelwerte der Interessenssteigerung
 
 ### Berechnung der Summen
@@ -30,17 +167,18 @@ View(daten)
 Für den Vergleich müssen wir erst die Summen der Items berechnen und dann die Summen des Interesses vor Betrachtung des Stimulus von denen nach der Betrachtung des Stimulus subtrahieren.
 
 ```{r}
-daten <-
-daten %>% 
-  select(!c(SERIAL:STARTED, MAILSENT, LASTDATA, MISSING, MISSREL, MAXPAGE, 
-            R001_CP, TIME001:TIME004, TIME006:TIME011))
-daten <- daten %>% 
-   row_sums(daten[21:24], n = 4, var = "sum_ibefore") %>% 
-   row_sums(daten[25:28], n = 4, var = "sum_iafter")
+# daten2 <- daten1 %>% 
+#   row_sums(daten1[I101_01, I101_02, I101_03, I101_04], n = 4, var = "sum_ibefore") %>% 
+#   row_sums(daten1[I201_01, I201_02, I201_03, I201_04], n = 4, var = "sum_iafter")
+# hat bei mir irgendwie nicht funktioniert
+daten2 <- daten1 %>% 
+  mutate(sum_ibefore = I101_01 + I101_02 + I101_03 + I101_04) %>% 
+  mutate(sum_iafter = I201_01 + I201_02 + I201_03 + I201_04) %>% 
+  select(!c(I101_01, I101_02, I101_03, I101_04, I201_01, I201_02, I201_03, I201_04))
+# setzt die Splaten auf 0
+# daten1 <- daten1[complete.cases(daten1[c("sum_ibefore", "sum_iafter")]), ]
 
-daten <- daten[complete.cases(daten[c("sum_ibefore", "sum_iafter")]), ]
-
-daten <- daten %>% 
+daten2 <- daten2 %>% 
   mutate(sum_diff = sum_iafter - sum_ibefore)
 ```
 
@@ -50,12 +188,12 @@ daten <- daten %>%
 Nun können wir einfach die Mittelwerte der Differenzen bilden und visualisieren.
 
 ```{r}
-daten <- daten %>%
+daten2 <- daten2 %>%
   group_by(R001) %>% 
   mutate(mean_diff = mean(sum_diff))
 
 ggbetweenstats(
-  daten,
+  daten2,
   x = R001,
   y = sum_diff,
   results.subtitle = FALSE
@@ -69,11 +207,8 @@ Jetzt sehen wir die Unterschiede in der Interessenssteigerung für jede Gruppe. 
 Nun berechnen wir das Modell, als die Interessenssteigerung in Abhängigkeit von der Versuchsgruppe:
 
 ```{r}
-daten1 <- daten %>% 
-  mutate(R001 = factor(R001))
-
 lm1 <- stan_glm(sum_diff ~ R001, 
-                data = daten1, 
+                data = daten2, 
                 refresh = 0)
 ```
 
@@ -119,8 +254,8 @@ Für den Effekt des Diagrammtyps ist keine klare inferenzstatistische Aussage hi
 Nun untersuchen wir, ob Cognitive Load (CL) einen Einfluss auf die Interessenssteigerung hat und den Effekt von GR001 auf die Iteressenssteigerung mediiert.
 
 ```{r}
-lm2 <- stan_glm(sum_diff ~ CL02_01, 
-                data = daten1, 
+lm2 <- stan_glm(sum_diff ~ CL, 
+                data = daten2, 
                 refresh = 0)
 ```
 
@@ -146,8 +281,8 @@ Es ist kein signifikanter Effekt festzustellen, wenn dann nur ein äußerst schw
 # Untersuchung des Effekts von R001 auf CL
 
 ```{r}
-lm3 <- stan_glm(CL02_01 ~ R001, 
-                data = daten1, 
+lm3 <- stan_glm(CL ~ R001, 
+                data = daten2, 
                 refresh = 0)
 ```
 
@@ -170,6 +305,4 @@ report(lm3)
 
 Es ist hier ebenfalls kein signifikanter Effekt zu beobachten.
 
-
-
-
+Ich hoffe es funktioniert jetzt
