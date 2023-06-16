@@ -19,6 +19,8 @@ library(tidyverse)
 library(ggstatsplot)
 library(ggcorrplot)
 library(rstanarm)
+library(brms)
+library(mediation)
 library(easystats)
 daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
 View(daten)
@@ -43,6 +45,8 @@ daten <- daten[complete.cases(daten[c("sum_ibefore", "sum_iafter")]), ]
 
 daten <- daten %>% 
   mutate(sum_diff = sum_iafter - sum_ibefore)
+daten <- daten %>% 
+  mutate(R001 = factor(R001))
 ```
 
 
@@ -192,11 +196,31 @@ Für den Effekt des Diagrammtyps ist keine klare inferenzstatistische Aussage hi
 # Untersuchung des Effekts von Cognitive Load auf die Interessenssteigerung
 
 
-Nun untersuchen wir, ob Cognitive Load (CL) einen Einfluss auf die Interessenssteigerung hat und den Effekt von GR001 auf die Iteressenssteigerung mediiert.
+Nun untersuchen wir, ob Cognitive Load (CL) einen Einfluss auf die Interessenssteigerung hat und den Effekt von R001 auf die Interessenssteigerung mediiert oder von R001 moderiert wird.
+
+## Prüfung der Moderation von CL durch R001
 
 ```{r}
-lm2 <- stan_glm(sum_diff ~ CL02_01, 
-                data = daten1, 
+library(ggthemes)
+daten %>% 
+ggplot()+
+  aes(CL02_01, mean_diff1, color = R001)+
+  geom_point() + 
+  theme_fivethirtyeight() +
+  labs(title = "Effekt von CL auf Interessenssteigerung",
+       y = "Interessenssteigerung",
+       x = "Cognitive Load",
+       color = "Graphentyp")+
+  theme(axis.title = element_text(), text = element_text(family = "Sitka Text")) + 
+  scale_color_colorblind()+
+  geom_smooth(method = lm, se = F)
+```
+
+
+
+```{r}
+lm2 <- stan_glm(mean_diff_z ~ CL02_01 + CL02_01:R001, 
+                data = daten, 
                 refresh = 0)
 ```
 
@@ -215,19 +239,15 @@ rope(lm2) %>% plot()
 ```{r}
 report(lm2)
 ```
-## Fazit
 
-Es ist kein signifikanter Effekt festzustellen, wenn dann nur ein äußerst schwacher. Völlig auszuschließen ist der Effekt jedoch auch nicht.
+# Prüfung, ob CL den Effekt von R001 auf die Interessenssteigerung mediiert
 
-# Untersuchung des Effekts von R001 auf CL
+## Modellierung des Einflusses von R001 auf CL
 
 ```{r}
 lm3 <- stan_glm(CL02_01 ~ R001, 
-                data = daten1, 
+                data = daten, 
                 refresh = 0)
-```
-
-```{r}
 parameters(lm3)
 ```
 ```{r}
@@ -239,9 +259,23 @@ rope(lm3)
 ```{r}
 rope(lm3) %>% plot()
 ```
+
 ```{r}
-report(lm3)
+lm4 <- stan_glm(sum_diff ~ R001 + CL02_01, 
+                data = daten, 
+                refresh = 0)
+parameters(lm4)
 ```
+
+ 
+
+```{r}
+m1 <- mediate(lm3, lm4, sims = 1000, treat = "R001", mediator = "CL02_01")
+)
+m1 <- mediate(lm3, lm4, treat = "R001", mediator = "CL02_01", boot = TRUE, sims = 1000)
+```
+
+
 ## Fazit
 
-Es ist hier ebenfalls kein signifikanter Effekt zu beobachten.
+Es ist kein signifikanter Effekt festzustellen, wenn dann nur ein äußerst schwacher. Völlig auszuschließen ist der Effekt jedoch auch nicht.
