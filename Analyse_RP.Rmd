@@ -19,6 +19,8 @@ library(tidyverse)
 library(ggstatsplot)
 library(rstanarm)
 library(easystats)
+library(mediation)
+library(flexplot)
 daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
 View(daten)
 ```
@@ -301,8 +303,40 @@ rope(lm3) %>% plot()
 ```{r}
 report(lm3)
 ```
+
+## Mediator CL
+
+```{r}
+medCL <- stan_glm(sum_diff ~ R001 + CL, 
+                data = daten2, 
+                refresh = 0)
+parameters(medCL)
+```
+```{r}
+m1 <- mediate(lm3_1, medCL_1, treat = 'R001', mediator = 'CL', boot = TRUE, sims = 500)
+```
+```{r}
+lm3_1 <- lm(CL ~ R001, 
+                data = daten2)
+medCL_1 <- lm(sum_diff ~ CL + R001, 
+              data = daten2)
+```
+
+```{r}
+summary(m1)
+```
+```{r}
+summary(lm3_1)
+```
+```{r}
+visualize(lm3_1)
+```
+
+```{r}
+summary(medCL_1)
+```
+
+```{r}
+mediate_plot(sum_diff ~ CL + R001, data = daten2)
+```
 ## Fazit
-
-Es ist hier ebenfalls kein signifikanter Effekt zu beobachten.
-
-Ich hoffe es funktioniert jetzt
