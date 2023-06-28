@@ -116,7 +116,6 @@ i_items <- daten %>%
 alpha_result <- psych::alpha(i_items)
 
 alpha_result$total$raw_alpha
-
 ```
 
 

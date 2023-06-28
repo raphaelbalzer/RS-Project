@@ -19,9 +19,7 @@ library(tidyverse)
 library(ggstatsplot)
 library(rstanarm)
 library(easystats)
-library(mediation)
-library(flexplot)
-daten <- read_excel("data_rpDV41_2023-06-10_13-48.xlsx")
+daten <- read_excel("data_rpDV41_2023-06-28_17-06.xlsx")
 View(daten)
 ```
 
@@ -103,6 +101,9 @@ daten1$Bildungsstand <-
 ```{r}
 daten1 <-
 daten1 %>% 
+  mutate(Geschlecht = DE01,
+         Alter = DE02,
+         )
   select(!c(DE01, DE02, DE03, DE04))
 ```
 
@@ -130,7 +131,11 @@ daten1 <- daten1 %>%
 ```{r}
 daten1 <- daten1 %>% 
   mutate(R001 = as.factor(R001),
-         disp_interest = as.factor(disp_interest))
+         disp_interest = as.factor(disp_interest),
+         Geschlecht = factor(Geschlecht),
+         Alter = factor(Alter),
+         Taetigkeit = factor(Taetigkeit),
+         Bildungsstand = factor(Bildungsstand))
 ```
 
 # FF01 auf falsche Antworten prüfen
@@ -162,6 +167,18 @@ daten1 <- daten1 %>%
   select(-DE04_08)
 ```
 
+## DAG
+
+```{r}
+library(dagitty)
+
+mein_modell <- dagitty("dag{
+Diagrammtyp -> CL
+CL -> Interessenssteigerung
+}")
+
+plot(graphLayout(mein_modell))
+```
 ## Vergleich der Mittelwerte der Interessenssteigerung
 
 ### Berechnung der Summen
@@ -190,19 +207,104 @@ daten2 <- daten2 %>%
 Nun können wir einfach die Mittelwerte der Differenzen bilden und visualisieren.
 
 ```{r}
-daten2 <- daten2 %>%
+daten2 %>% 
+  filter(Geschlecht == "männlich") %>% 
   group_by(R001) %>% 
-  mutate(mean_diff = mean(sum_diff))
+  summarise(mean = mean(sum_diff))
+```
 
+
+```{r}
 ggbetweenstats(
   daten2,
   x = R001,
-  y = sum_diff,
-  results.subtitle = FALSE
+  y = sum_diff
 ) 
 ```
 
 Jetzt sehen wir die Unterschiede in der Interessenssteigerung für jede Gruppe. Die Unterschiede fallen äußerst gering aus, nichtsdestotrotz ist ein leichter Unterschied zu erkennen, der sich mit unserer Hypothese deckt, nämlich fällt die Interessenssteigerung beim animierten Graph höher aus, als beim statischen und die Steigerung beim interaktiven wiederum höher als beim animierten. Bemerkenswert ist außerdem, dass es bei Gruppe 3 nur einen Fall gibt, bei dem sich eine Interessensminderung abzeichnet, während es bei den anderen beiden Gruppen sowohl mehr, als auch extremere Fälle dieser Art gibt.
+
+```{r}
+ggbetweenstats(
+  daten2,
+  x = R001,
+  y = CL
+) 
+```
+
+
+## Weitere Deskriptivstatistiken
+
+```{r}
+daten2 <- daten2 %>% 
+  mutate(mean_diff = sum_diff/4,
+         mean_diff_z = std(mean_diff),
+         sd_diff = sd(sum_diff))
+```
+
+### Berechnung des Standardfehlers
+
+```{r}
+i_alpha <- .9
+
+i_stdmessfehler = sd(daten2$mean_diff, na.rm = TRUE) * sqrt(1 - i_alpha)
+i_stdmessfehler
+```
+### Berechnung der 95% Konfidenzintervalle
+
+```{r}
+daten2 <- daten2 %>% 
+  mutate(KI_unten = mean_diff - 2*i_stdmessfehler,
+         KI_oben = mean_diff + 2*i_stdmessfehler)
+
+```
+
+### Visualisierung der Konfidenzintervalle
+
+```{r}
+daten2 %>% 
+  slice_head(n = 5) %>% 
+  ggplot() +
+  aes(y = mean_diff, ymin = KI_unten, ymax = KI_oben, x = CASE) +
+  geom_pointrange()
+```
+### Cronbachs Aplha
+
+```{r}
+i_items <- daten1 %>% 
+  select(I101_01:I201_04)
+
+alpha_result <- psych::alpha(i_items)
+
+alpha_result$total$raw_alpha
+```
+### Beschreibung der Verteilung
+```{r}
+library(gt)  # gt wie "grammer of tables"
+
+meine_tab <- 
+  daten2 %>% 
+  select(CL, sum_ibefore, sum_iafter, sum_diff, mean_diff)%>%
+  describe_distribution()%>% 
+  gt() %>%  # erzeugt schicke Tabelle
+  fmt_number(where(is.numeric), decimals = 2) # Anzahl der Dezimalstellen
+
+meine_tab
+```
+### Korrelationstabelle
+```{r}
+meine_cor_tab <-
+  daten2 %>%
+  select(CL, sum_diff, sum_ibefore, sum_iafter) %>% 
+  correlation()
+
+meine_cor_tab
+```
+```{r}
+summary(meine_cor_tab) %>% 
+  gt() %>%  # machen wir gleich eine schicke HTML-Tabelle
+  fmt_number(where(is.numeric), decimals = 2)
+```
 
 ## Berechnung des Modells
 
@@ -214,14 +316,19 @@ lm1 <- stan_glm(sum_diff ~ R001,
                 refresh = 0)
 ```
 
-## Prüfen auf Signifikanz
+## Prüfen auf Effekt
 
 ### Interpretation der Modellparameter
 
 Nun sehen wir uns die Koeffizienten des Modells an:
 
 ```{r}
-parameters(lm1)
+parameters_tab <- parameters(lm1, prob = .95, ci_method = "hdi") 
+parameters_tab
+
+summary(parameters_tab) %>% 
+  gt() %>%  # machen wir gleich eine schicke HTML-Tabelle
+  fmt_number(where(is.numeric), decimals = 2)
 ```
 
 ```{r}
@@ -230,17 +337,37 @@ parameters(lm1) %>% plot(show_intercept = TRUE)
 
 Der Gruppenunterschied wird auf 0.31, 0.22 geschätzt; das ist der Punktschätzer der UV R001. Die Grenzen eines 95%-CI für die UV liegen bei 0.24 bzw. 0.35. Dieser Bereich schließt die 0 aus, das heißt, dass auf jeden Fall ein Effekt vorliegt.
 
+### HDI
+
+```{r}
+plot(hdi(lm1), show_intercept = TRUE)  # keine Achsenlabels auf Y ("am" weg)
+```
+
 ### ROPE-Test
 
 Testen der Hypothese mit dem ROPE-Verfahren:
 
 ```{r}
-rope(lm1)
+rope(lm1) %>% 
+  gt() %>%  # machen wir gleich eine schicke HTML-Tabelle
+  fmt_number(where(is.numeric), decimals = 2)
 ```
 ```{r}
-rope(lm1) %>% plot()
+rope(lm1) %>% plot(show_intercept = TRUE)
 ```
-Die Verteilungen liegen zu 4%, 32% und 17% im ROPE, das heißt wir können keinen signifikanten Effekt feststellen.
+Die Verteilungen liegen zu 4%, 32% und 17% im ROPE, das heißt wir können keinen Haupt-Effekt feststellen.
+
+### R2
+
+```{r}
+lm1_R2 <- 
+  bayes_R2(lm1) %>% 
+  as_tibble()
+
+hdi(lm1_R2) %>% 
+  gt() %>%  # machen wir gleich eine schicke HTML-Tabelle
+  fmt_number(where(is.numeric), decimals = 2)
+```
 
 
 ```{r}
@@ -250,93 +377,4 @@ report(lm1)
 
 Für den Effekt des Diagrammtyps ist keine klare inferenzstatistische Aussage hinsichtlich eines Indifferenzbereichs möglich: Es ist plauibel, laut dem Modell, dass es einen praktisch bedeutsamen Unterschied gibt, aber es ist auch plausibel, dass es keinen praktisch bedeutsamen Unterschied gibt.
 
-# Untersuchung des Effekts von Cognitive Load auf die Interessenssteigerung
 
-
-Nun untersuchen wir, ob Cognitive Load (CL) einen Einfluss auf die Interessenssteigerung hat und den Effekt von GR001 auf die Iteressenssteigerung mediiert.
-
-```{r}
-lm2 <- stan_glm(sum_diff ~ CL, 
-                data = daten2, 
-                refresh = 0)
-```
-
-```{r}
-parameters(lm2)
-```
-```{r}
-parameters(lm2) %>% plot(show_intercept = TRUE)
-```
-```{r}
-rope(lm2)
-```
-```{r}
-rope(lm2) %>% plot()
-```
-```{r}
-report(lm2)
-```
-## Fazit
-
-Es ist kein signifikanter Effekt festzustellen, wenn dann nur ein äußerst schwacher. Völlig auszuschließen ist der Effekt jedoch auch nicht.
-
-# Untersuchung des Effekts von R001 auf CL
-
-```{r}
-lm3 <- stan_glm(CL ~ R001, 
-                data = daten2, 
-                refresh = 0)
-```
-
-```{r}
-parameters(lm3)
-```
-```{r}
-parameters(lm3) %>% plot(show_intercept = TRUE)
-```
-```{r}
-rope(lm3)
-```
-```{r}
-rope(lm3) %>% plot()
-```
-```{r}
-report(lm3)
-```
-
-## Mediator CL
-
-```{r}
-medCL <- stan_glm(sum_diff ~ R001 + CL, 
-                data = daten2, 
-                refresh = 0)
-parameters(medCL)
-```
-```{r}
-m1 <- mediate(lm3_1, medCL_1, treat = 'R001', mediator = 'CL', boot = TRUE, sims = 500)
-```
-```{r}
-lm3_1 <- lm(CL ~ R001, 
-                data = daten2)
-medCL_1 <- lm(sum_diff ~ CL + R001, 
-              data = daten2)
-```
-
-```{r}
-summary(m1)
-```
-```{r}
-summary(lm3_1)
-```
-```{r}
-visualize(lm3_1)
-```
-
-```{r}
-summary(medCL_1)
-```
-
-```{r}
-mediate_plot(sum_diff ~ CL + R001, data = daten2)
-```
-## Fazit
